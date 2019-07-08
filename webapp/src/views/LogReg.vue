@@ -87,8 +87,8 @@
                     this.$message.success("登陆成功");
                     //TODO: save token and pk_key into local storage
                     //TODO: route to home page
-                    localStorage.setItem("pk_key", result.data.pk_key);
-                    localStorage.setItem("token", result.data.token);
+                    sessionStorage.setItem("pk_key", result.data.pk_key);
+                    sessionStorage.setItem("token", result.data.token);
                 }
                 else {
                     this.$message.error(result.msg);
