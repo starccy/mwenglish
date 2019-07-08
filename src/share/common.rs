@@ -2,14 +2,14 @@ use crate::db::Pool;
 use actix::{Addr, Actor, SyncContext};
 use actix_redis::RedisActor;
 
-pub struct AppState {
-    pub db: Pool,
-    pub redis: Addr<RedisActor>,
-}
-
-impl Actor for AppState {
-    type Context = SyncContext<Self>;
-}
+//pub struct AppState {
+//    pub db: Pool,
+//    pub redis: Addr<RedisActor>,
+//}
+//
+//impl Actor for AppState {
+//    type Context = SyncContext<Self>;
+//}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BaseDataMsgs<'a, T> {
@@ -98,8 +98,40 @@ impl<'a, T> BaseDataMsgs<'a, T> {
             data: None
         }
     }
+
+    pub fn format_error() -> BaseDataMsgs<'a, Option<T>> {
+        BaseDataMsgs {
+            code: "5",
+            msg: "请求数据格式不正确",
+            data: None,
+        }
+    }
+
+    pub fn format_error_with_message(msg: &'a str) -> BaseDataMsgs<'a, Option<T>> {
+        BaseDataMsgs {
+            code: "5",
+            msg,
+            data: None,
+        }
+    }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StringDataMsgs<T> {
+    pub code: String,
+    pub msg: String,
+    data: T,
+}
+
+impl<'a, T> From<BaseDataMsgs<'a, T>> for StringDataMsgs<T> {
+    fn from(base: BaseDataMsgs<'a, T>) -> Self {
+        Self {
+            code: base.code.to_string(),
+            msg: base.msg.to_string(),
+            data: base.data
+        }
+    }
+}
 
 lazy_static! {
     pub static ref REDIS_PASS: String = {
