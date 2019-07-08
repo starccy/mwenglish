@@ -1,8 +1,5 @@
-use crate::db::{Pool, establish_connection};
-use actix_web::{App, HttpServer, Result};
-use actix_web::middleware;
+use crate::db::establish_connection;
 use actix_web::web;
-use actix_cors::Cors;
 use crate::api::user;
 use actix_redis::RedisActor;
 

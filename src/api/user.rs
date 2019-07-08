@@ -1,17 +1,17 @@
 use crate::db::Pool;
-use actix_web::web;
+use actix_web::{web, HttpRequest};
 use actix_web::{HttpResponse, Error};
 use futures::future::{Future, ok as fut_ok, Either};
 use crate::model::user::*;
 use crate::authentication::vaptcha::{ValidatePayload, ValidateToken};
-use crate::share::common::BaseDataMsgs;
+use crate::share::common::{BaseDataMsgs, StringDataMsgs};
 use actix::Addr;
 use actix_redis::{RedisActor, Command};
 use redis_async::resp::RespValue;
 use crate::utils::{gen_sms_code, send_sms};
 use crate::crypt::create_uuid;
 use crate::crypt::rsa::ReaKeyPair;
-use crate::authentication::check_login::LoggedUser;
+use crate::authentication::check_login::{LoggedUser, RequestData, UserUid};
 
 pub fn user_signup(db: web::Data<Pool>, signup_user: web::Json<SignUpUser>, redis: web::Data<Addr<RedisActor>>) -> impl Future<Item = HttpResponse, Error = Error> {
     if *&signup_user.password.is_empty() || *&signup_user.password.len() < 4 || *&signup_user.password.len() > 18 {
@@ -127,12 +127,16 @@ pub fn user_login(db: web::Data<Pool>, redis: web::Data<Addr<RedisActor>>, login
         }))
 }
 
-pub fn user_info(db: web::Data<Pool>, redis: web::Data<Addr<RedisActor>>, user_session: web::Json<UserSession>) -> impl Future<Item = HttpResponse, Error = Error> {
-    UserInfo::get_by_token(&*db, &redis, &user_session.token)
-        .from_err()
-        .and_then(|user_info| {
-            println!("user_info: {:?}", user_info);
-            fut_ok(HttpResponse::Ok().json(BaseDataMsgs::<Option<String>>::success(None)))
-        })
+pub fn user_info(db: web::Data<Pool>, redis: web::Data<Addr<RedisActor>>, logged_user: RequestData<LoggedUser>, req: HttpRequest) -> impl Future<Item = HttpResponse, Error = Error> {
+    let extensions = req.extensions();
+    let uid = extensions.get::<UserUid>().clone();
+    if uid.is_none() {
+        dbg!("user id is none");
+    }
+    else {
+        dbg!(uid);
+    }
+    fut_ok(HttpResponse::Ok().json(BaseDataMsgs::<Option<String>>::success(None)))
 }
+
 

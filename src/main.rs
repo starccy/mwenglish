@@ -4,6 +4,7 @@
 #[macro_use] extern crate redis_async;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate derive_more;
+#[macro_use] extern crate json;
 
 mod db;
 mod share;
@@ -30,8 +31,7 @@ fn main() -> Result<()> {
             .configure(router::router)
     })
         .bind("0.0.0.0:8000")?
-        .run()
-        .unwrap();
+        .start();
 
     sys.run().map_err(Error::from)
 }
