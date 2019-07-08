@@ -18,40 +18,41 @@ impl ReaKeyPair {
         }
     }
 
-    pub fn new_with_params(private_key: Option<String>, public_key: Option<String>) -> Self {
+    pub fn new_with_params(private_key: Option<String>, public_key: Option<String>) -> Result<Self, String> {
         let private_key = if private_key.is_some() {
             let raw = private_key.unwrap();
-            Some(Rsa::private_key_from_pem(raw.as_bytes()).unwrap())
+            let de_raw = base64::decode(&raw).map_err(|e| e.to_string())?;
+            Some(Rsa::private_key_from_pem(de_raw.as_slice()).map_err(|e| e.to_string())?)
         } else {
             None
         };
 
         let public_key = if public_key.is_some() {
             let raw = public_key.unwrap();
-            let de_raw = base64::decode(&raw).unwrap();
-            Some(Rsa::public_key_from_pem(raw.as_bytes()).unwrap())
+            let de_raw = base64::decode(&raw).map_err(|e| e.to_string())?;
+            Some(Rsa::public_key_from_pem(de_raw.as_slice()).map_err(|e| e.to_string())?)
         } else {
             None
         };
 
-        Self {
+        Ok(Self {
             public_key,
             private_key,
-        }
+        })
     }
 
-    pub fn decrypt_with_private_key(&self, encrypted_content: String) -> String {
-        let content = base64::decode(&encrypted_content).unwrap();
+    pub fn decrypt_with_private_key(&self, encrypted_content: String) -> Result<String, String> {
+        let content = base64::decode(&encrypted_content).map_err(|e| e.to_string())?;
         let private_key = self.private_key.as_ref().unwrap();
         let mut result = vec![0u8; private_key.size() as usize];
-        let _ = private_key.private_decrypt(&content, result.as_mut_slice(), Padding::PKCS1).unwrap();
+        let _ = private_key.private_decrypt(&content, result.as_mut_slice(), Padding::PKCS1).map_err(|e| e.to_string())?;
         for i in (0..result.len()).rev() {
             if result[i] != 0 {
                 break;
             }
             result.remove(i);
         }
-        String::from_utf8_lossy(&result).to_string()
+        Ok(String::from_utf8_lossy(&result).to_string())
     }
 
     pub fn encrypt_with_public_key(&self, original_content: String) -> String {
